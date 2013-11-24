@@ -7,6 +7,11 @@ import errno
 import tempfile
 import pprint
 
+try:
+	input = raw_input
+except NameError:
+	pass
+
 set_client_field = re.compile(r'(?P<mcpbot_command>scf) (?P<searge_name>\w+) (?P<semantic_name>\w+)( (?P<description>.+))?', flags=re.IGNORECASE)
 set_client_method = re.compile(r'(?P<mcpbot_command>scm) (?P<searge_name>\w+) (?P<semantic_name>\w+)( (?P<description>.+))?', flags=re.IGNORECASE)
 set_server_field = re.compile(r'(?P<mcpbot_command>ssf) (?P<searge_name>\w+) (?P<semantic_name>\w+)( (?P<description>.+))?', flags=re.IGNORECASE)
@@ -38,12 +43,12 @@ def process_command(data, src_dir, mcp_live_dir, output_file):
 					yes = console_readline('Replace?', ('y', 'n'))
 					if yes != 'y':
 						print('Skipping this line.')
-						tmp.write(line)
+						tmp.write(bytes(line, 'utf-8'))
 					else:
 						print('Wrote replacement: %s' % line.replace(data['searge_name'], data['semantic_name']))
-						tmp.write(line.replace(data['searge_name'], data['semantic_name']))
+						tmp.write(bytes(line.replace(data['searge_name'], data['semantic_name']), 'utf-8'))
 				else:
-					tmp.write(line)
+					tmp.write(bytes(line, 'utf-8'))
 				i += 1
 		tmp.close()
 		os.remove(each)
@@ -103,11 +108,11 @@ def main():
 ### Uninteresting functions
 def console_readline(prompt='', valid_set=None):
 	if valid_set is None:
-		return raw_input(prompt)
+		return input(prompt)
 	else:
-		prompt = prompt + ' [' + '/'.join(map(lambda x: str(x), valid_set)) + ']: '
+		prompt = prompt + ' [' + '/'.join(list(map(lambda x: str(x), valid_set))) + ']: '
 		while True:
-			user_input = raw_input(prompt)
+			user_input = input(prompt)
 			if user_input in valid_set:
 				return user_input
 			print('Invalid input. Enter one of %s.' % str(valid_set))
@@ -123,7 +128,7 @@ def expand_mcpbot_command(cmd):
 		'f': 'field',
 		'm': 'method',
 	}
-	return ' '.join(['set' if cmd[0] == 's' else 'get'] + map(lambda ch: substitutions[ch], cmd[1:]))
+	return ' '.join(['set' if cmd[0] == 's' else 'get'] + list(map(lambda ch: substitutions[ch], cmd[1:])))
 
 def mkdir_p(path):
 	try:
@@ -135,7 +140,7 @@ def mkdir_p(path):
 			raise
 
 def touch(filepath):
-	with file(filepath, 'a'):
+	with open(filepath, 'a'):
 		os.utime(filepath, None)
 
 def backup_file(backup_location, filepath):
